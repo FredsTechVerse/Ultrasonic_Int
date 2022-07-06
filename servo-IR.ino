@@ -64,7 +64,7 @@ int obstacle_right;
 //==========================
 unsigned long current_time; 
 unsigned long previousTime_1 = 0;
-unsigned long interval = 750;
+unsigned long interval = 5000;
 
 //IR receiver setup
 //===================
@@ -88,13 +88,16 @@ if(results.value==0xFFFFFFFF){
 
 
 int speedIncrement (int new_speed){
-  if(new_speed<=250){
+  if(new_speed<250){
     new_speed += 10;
     return (new_speed);
-    }else if(new_speed=250){
+    }else if(new_speed==250){
      new_speed+=5;
      return(new_speed);
-      }else{
+      }else if (new_speed==255){
+        for (int count=0;count<=5;count++){
+          blinking();
+          };
       return (new_speed);
       }
  
@@ -105,10 +108,13 @@ int speedIncrement (int new_speed){
   if(new_speed<255 && new_speed>0){
     new_speed -= 10;
     return (new_speed);
-    }else if(new_speed=255){
+    }else if(new_speed==255){
      new_speed-=5;
      return(new_speed);
-      }else{
+      }else if (new_speed==0){
+       for (int count=0;count<=5;count++){
+          blinking();
+          };
       return (new_speed);
       }
  
@@ -197,7 +203,7 @@ void meanPosL(){
  delay(20);
  }
   obstacle_left = IR_sensor();//Servo to capture the value
-  Serial.print("A move to the left.");
+  Serial.print("A move to the left : ");
   Serial.println(obstacle_left);
  };
 
@@ -208,7 +214,7 @@ void meanPosL(){
  delay(20);
  }
    obstacle_right = IR_sensor();//Servo to capture the value
-   Serial.print("A move to the right.");
+   Serial.print("A move to the right : ");
    Serial.println(obstacle_right);
  }; 
   
@@ -228,7 +234,7 @@ void meanPosL(){
   return distance;
  };
 
-//BASICS FOR OBJECT DETECTION
+//BASICS FOR OBJECT DETECTION.
 //============================
   void IR_Receiver_Module(){
   digitalWrite(trigPin,LOW);
@@ -242,7 +248,7 @@ void meanPosL(){
   Serial.print("Distance : ");
   Serial.print(distance);
   Serial.println(" cm ");
-  delay(1000);
+//  delay(500);
 
 
   if (distance<=100){
@@ -270,20 +276,18 @@ void meanPosL(){
 //========================================================================//
 
 void buzzer_action(){//This should just be a simple buzzer test.
-//  Blink LEDs 2 times.
+//  Blink LEDs 5 times.
 //======================
   for (int blk =0; blk<=5; blk++){
     blinking();
   };  
-  tone(buzzerPin,2000);//Tripping off the buzzer.
+
   turnOff();//Bringing our car to a halt.
   
 //Move the servo left & right to take in the values.
 //==================================================
  servo_left();
- delay(1000);
  servo_right();
- delay(1000);
 
 //Using the global variables to decide the fate/direction.
 //========================================================
@@ -294,10 +298,10 @@ delay(500);
 Serial.print("Turning Right ");
 turningRight();
 movingForward(c_speed);
-delay(3000);
+delay(2000);
 turningLeft();
 movingForward(c_speed);
-delay(3000);
+delay(2000);
 meanPosR();
 movingForward(c_speed);
 }else if(obstacle_right < obstacle_left){
@@ -306,10 +310,10 @@ delay(500);
 Serial.print("Turning Left");
 turningLeft();
 movingForward(c_speed);
-delay(3000);
+delay(2000);
 turningRight();
 movingForward(c_speed);
-delay(3000);
+delay(2000);
 meanPosR();
 movingForward(c_speed);
   }else {
@@ -425,10 +429,9 @@ pinMode(7,OUTPUT);
 //SERVO SETUP
 //===========
 agv_servo.attach(servo_pos); // Servo attached to pin 3
-agv_servo.write(init_pos);
 IR_servo.attach(servo2_pos);//Sero attached to pin 9
+agv_servo.write(init_pos);
 IR_servo.write(init2_pos);
-
 
 //ULTRASONIC SENSOR
 //==================
@@ -449,47 +452,37 @@ pinMode(enA,OUTPUT);//PWM
 
 }
 void loop(){
-  switchCase(); //The code is working correctly.
+//  inc_speed();
+//dec_speed();
+//Serial.print("The current speed is : ");
+//Serial.println(c_speed);
+//delay(1000);
+
+//  switchCase(); //The code is working correctly.
 // IR_Receiver_Module();
-//current_time = millis();
 
+//Taking the ultrasonic sensor readings at intervals of 200ms.
+//=============================================================
 
-//if(current_time - previousTime_1>=interval){
-//
-// obstacle = IR_sensor();//Appends the IR sensor value to the obstacle variable.
-// Serial.print("Normal Obstacle Distance Checkup : ");
-// Serial.println(obstacle);
-//
-////START OF BODY
-////==============
-// if(obstacle>90){
-//    blinking();
-//    
-////   movingForward(c_speed);
-//  }
-//  else if(obstacle<=90){
-//    buzzer_action();//This function should kick in.
-//  };
-////  This is like the function event tracker.
-//  previousTime_1 = current_time;
-//  
-//}
+current_time = millis();
+if(current_time - previousTime_1>=interval){
+  Serial.println(previousTime_1);
+ obstacle = IR_sensor();//Appends the IR sensor value to the obstacle variable.
+ Serial.print("Normal Obstacle Distance Checkup : ");
+ Serial.println(obstacle);
+
+//START OF BODY
+//==============
+ if(obstacle>90){
+    blinking(); 
+   movingForward(c_speed);
+  }
+  else if(obstacle<=90){
+    buzzer_action();//This edf cccccccccccccccccgfunction should kick in.
+  };
+//  This is like the function event tracker.
+  previousTime_1 = current_time;
+  
+}
 
 };
-
-//CHALLENGES ENCOUNTERED
-//======================
-/*
-For the switch case statement, upon the press of a certain button the code just keeps on looping. Doesnt break upon end of the execution.
-For the if statement the code start to implement even b4 a user action via the remote.Also keeps looping.
-*/
-
-//KEY THINGS TO NOTE.
-//===================
-/*
- * Break down the repetitive code into functions.
- * Save the pins in variables for easier reference and amendments.
- * Create a for loop for buttons 0 - 9 .... Make them dynamic.
- * look into asynchronous programming of arduino where the servo motor can turn as it is being given a push by the dc motor.
- * look into the purpose of having a common ground arduino.
-*/
