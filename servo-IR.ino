@@ -228,6 +228,44 @@ void meanPosL(){
   return distance;
  };
 
+//BASICS FOR OBJECT DETECTION
+//============================
+  void IR_Receiver_Module(){
+  digitalWrite(trigPin,LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin,HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin,LOW);
+  
+ duration=pulseIn(echoPin,HIGH);
+  distance=(duration*0.034/2);
+  Serial.print("Distance : ");
+  Serial.print(distance);
+  Serial.println(" cm ");
+  delay(1000);
+
+
+  if (distance<=100){
+  tone(buzzerPin,2000);
+  delay(50);
+  turnOff();
+  for (int blk =0; blk<=5;blk++){
+    blinking();
+  };
+    turningLeft();
+    meanPosL();
+    turningRight();
+    meanPosR();
+  
+  
+    }
+  else{
+  movingForward(c_speed);
+  noTone(buzzerPin);
+      };
+      };
+
+
 //This is the after math after the value is taken by the ultrasonic sensor
 //========================================================================//
 
@@ -335,6 +373,12 @@ if(results.value==0xFFFFFFFF){
 };
 switch (results.value){
 
+ case Power:
+ blinking();
+ IR_Receiver_Module();
+ break;
+  
+
  case Button_L:
  blinking();
  turningLeft();
@@ -399,14 +443,14 @@ pinMode(in2,OUTPUT);
 pinMode(enA,OUTPUT);//PWM
 //DEBUG SECTION
 //=============
-servo_left();
-//delay(200);
+//servo_left();
+
 //servo_right();
-//delay(200);
+
 }
 void loop(){
-//  switchCase(); //The code is working correctly.
-
+  switchCase(); //The code is working correctly.
+// IR_Receiver_Module();
 //current_time = millis();
 
 
