@@ -1,36 +1,19 @@
+//The arduino library is automatically included.
+//Library for the servo motor&the IR receiver
+//===========================================
 #include <Servo.h>
 #include <IRremote.h> //Library for the IR reciever
 
-//SERVO OBJECT CREATED TO CONTROL A SERVO
-//========================================
+//Creation of the servo objects for the agv_servo & the ultrasonic servo
+//========================================================================
 Servo agv_servo;
 Servo IR_servo;
 
-//MILLIS CRUCIAL VARIABLES.
-//==========================
- 
-const unsigned long eventTime_1_LDR = 1000;
-const unsigned long eventTime_2_LDR = 1500;
+//DEFINATION OF VARIABLES
+//========================
 
-unsigned long previousTime_1 = 0;
-unsigned long previousTime_2 = 0;
-unsigned long previousTime_3 = 0;
-unsigned long previousTime_4 = 0;
-
-int ledState = LOW;
-long OnTime = 250;
-long OffTime = 750;
-//ULTRASONIC SENSOR
-//==================
-long duration;
-int distance;
-
-#define echoPin 8
-#define trigPin 6
-#define buzzerPin 9
-
-//VITRON REMOTE CONTROL VARIABLES
-//================================
+//Vitron Remote.
+//==============
 #define Button_L 0xFFA857
 #define Button_R 0xFFE01F
 #define Button_P 0xFFC23D
@@ -41,21 +24,50 @@ int distance;
 #define Button_Dec 0xFF22DD
 #define Button_Dec 0xFF22DD
 
-//INITIATION OF DATA VARIABLES
-//=============================
-int pos = 0;    // Stores the servo position
-int receiver = 10; //Reciever Pin
-int servo_pos = 3;
-uint32_t Previous;
-int c_speed = 200;
+//IR receiver & the servo position
+//=================================
+int init_pos = 42;//This is the initial servo position.
+int init2_pos = 90;//THis is the initial position for the ultrasonic sensor.
+int servo_pos = 3;//This is the pin to which the servo is attached to 
+int servo2_pos = 9;//This is the pin attached to the ultrasonic servo
+int c_speed = 100;//THis is for the speed increment and decrement.
+int b_speed = 100;//This is the constant speed for reversing.
 
-//INITIATION OF DC MOTOR VARIABLES.
-//==================================
+//IR receiver variables
+//======================
+int receiver = 10; //Reciever Pin
+uint32_t Previous;
+
+//DC motor variables
+//===================
 int enA = 5;
 int in1 = 2;
 int in2 = 4;
 
+//Ultrasonic Sensor Variables
+//===========================
+long duration;
+int distance;
 
+#define echoPin 8
+#define trigPin 6
+#define buzzerPin 9
+
+
+//Ultrasonic Servo Variables
+//===========================
+int obstacle;
+int obstacle_left;
+int obstacle_right;
+
+//Millis function variables.
+//==========================
+unsigned long current_time; 
+unsigned long previousTime_1 = 0;
+unsigned long interval = 750;
+
+//IR receiver setup
+//===================
 IRrecv irrecv(receiver);
 decode_results results;
 
@@ -87,10 +99,11 @@ int speedIncrement (int new_speed){
       }
  
   };
+  
 
   int speedDecrement (int new_speed){
   if(new_speed<255 && new_speed>0){
-    new_speed -= 5;
+    new_speed -= 10;
     return (new_speed);
     }else if(new_speed=255){
      new_speed-=5;
@@ -104,13 +117,13 @@ int speedIncrement (int new_speed){
   void  inc_speed(){
     c_speed = speedIncrement(c_speed);
     Serial.println(c_speed);
-    movingForward();
+    movingForward(c_speed);
     };
 
   void dec_speed(){
     c_speed = speedDecrement(c_speed);
     Serial.println(c_speed);
-    movingForward();
+    movingForward(c_speed);
     };
 
 void servoTest(){
@@ -125,6 +138,21 @@ void blinking(){
     digitalWrite(7,LOW);
     delay(100);
     };
+   
+ void turningLeft(){
+ for(int angle = 42; angle <=70; angle += 2) // goes from 45 degrees to 0 degrees
+ { // in steps of 1 degree
+ agv_servo.write(angle);
+ delay(20);
+ }
+  };
+ void turningRight(){
+ for(int angle = 42; angle >=0; angle -= 2) // goes from 45 degrees to 90 degrees
+ { // in steps of 1 degree
+ agv_servo.write(angle); // tell servo to go to position in variable 'angle'
+ delay(20);
+ }}; 
+
 
 void meanPosR(){
   for(int angle = 0; angle <= 42; angle += 2) // goes from 90 degrees to mean postion
@@ -141,86 +169,48 @@ void meanPosL(){
  }
 };
 
- int power = HIGH;
- 
- void togglePowerState (){
-  if(power==HIGH){
-    power = LOW;
-    digitalWrite(12,power);
-    digitalWrite(7,power);
-    
-    }else if (power ==LOW){
-      power = HIGH;
-    digitalWrite(12,power);
-    digitalWrite(7,power);
-    }
-  };
-
-  void LEDTest(){
-    digitalWrite(12,power);
-    digitalWrite(7,power);
-    };
-
-  void togglePower(){
-    togglePowerState();
-    delay(100);
-    LEDTest();
-    };
-    
   void turnOff(){
   digitalWrite(in1,LOW);
   digitalWrite(in2,LOW);
   analogWrite(enA,0);//We shall include a for loop here. For continuous increment and decrement.
   };
- void turningLeft(){
- for(int angle = 42; angle <=70; angle += 2) // goes from 45 degrees to 0 degrees
- { // in steps of 1 degree
- agv_servo.write(angle);
- delay(20);
- }
-  };
- void turningRight(){
- for(int angle = 42; angle >=0; angle -= 2) // goes from 45 degrees to 90 degrees
- { // in steps of 1 degree
- agv_servo.write(angle); // tell servo to go to position in variable 'angle'
- delay(20);
- }}; 
 
- void movingForward(){
+ void movingForward(int c_speed){
   digitalWrite(in1,LOW);
   digitalWrite(in2,HIGH);
   analogWrite(enA,c_speed);//We shall include a for loop here. For continuous increment and decrement.
  };
 
- void movingBackward(){
+ void movingBackward(int b_speed){
   digitalWrite(in1,HIGH);
   digitalWrite(in2,LOW);
-  analogWrite(enA,c_speed);//We shall include a for loop here. For continuous increment and decrement.
+  analogWrite(enA,b_speed);//We shall include a for loop here. For continuous increment and decrement.
   };
+
 
 //FUNCTIONS FOR THE IR RECEIVER SERVO
 //=======================================
-
-//INITIATION OF 
-int obstacle= 0;
-int obstacle_left;
-int obstacle_right;
-
-
  void servo_left(){
- for(int angle = 42; angle <=70; angle += 2) // goes from 45 degrees to 0 degrees
+ for(int angle = 90; angle <=30; angle -= 1) // goes from 45 degrees to 0 degrees
  { // in steps of 1 degree
  IR_servo.write(angle);
- delay(10);
+ delay(20);
  }
+  obstacle_left = IR_sensor();//Servo to capture the value
+  Serial.print("A move to the left.");
+  Serial.println(obstacle_left);
  };
 
  void servo_right(){
- for(int angle = 42; angle >=0; angle -= 2) // goes from 45 degrees to 90 degrees
+ for(int angle = 30; angle >=150; angle += 1) // goes from 45 degrees to 90 degrees
  { // in steps of 1 degree
- agv_servo.write(angle); // tell servo to go to position in variable 'angle'
- delay(10);
- }}; 
+ IR_servo.write(angle); // tell servo to go to position in variable 'angle'
+ delay(20);
+ }
+   obstacle_right = IR_sensor();//Servo to capture the value
+   Serial.print("A move to the right.");
+   Serial.println(obstacle_right);
+ }; 
   
  
  int IR_sensor(){
@@ -231,93 +221,101 @@ int obstacle_right;
   digitalWrite(trigPin,LOW);
   
  duration=pulseIn(echoPin,HIGH);
-  distance=(duration*0.034/2);
-  return distance;
-  
+  distance=(duration*0.034/2); 
 //  Serial.print("Distance : ");
 //  Serial.print(distance);
-//  Serial.println(" cm ");
+//  Serial.println(" cm ");//After printing out to the screen return the distance to the obstacle variable.
+  return distance;
  };
 
+//This is the after math after the value is taken by the ultrasonic sensor
+//========================================================================//
 
-void buzzer_init(){
-//CALLING THE IR SENSOR FUNCTION
-//==============================
-obstacle = IR_sensor();
-//obstacle = 5;
-//INITIAL LOGIC TO START MOVING FORWARD AFTER READING THE SENSOR VALUE
-//======================================================================
-  if (obstactle<=100){
-  tone(buzzerPin,2000);
-  delay(50);
-  turnOff();
-//  BLINK 5 TIMES
-//================
-  for (int blk =0; blk<=5;blk++){
+void buzzer_action(){//This should just be a simple buzzer test.
+//  Blink LEDs 2 times.
+//======================
+  for (int blk =0; blk<=5; blk++){
     blinking();
-  };
-  IR_Left();
- int left = IR_Sensor();
-  IR_Right();
-  int right = IR_Sensor();
+  };  
+  tone(buzzerPin,2000);//Tripping off the buzzer.
+  turnOff();//Bringing our car to a halt.
+  
+//Move the servo left & right to take in the values.
+//==================================================
+ servo_left();
+ delay(1000);
+ servo_right();
+ delay(1000);
 
-  if (IR_Right && IR_Left >=1089 ){
-//    Moving either  right or left
-    }else if(IR_Right < IR_Left){
-//      Move back
-//      Move to the right
-}else if(IR_Right> IR_Left){
-//  Move back
-//Then move left
+//Using the global variables to decide the fate/direction.
+//========================================================
+ if(obstacle_right > obstacle_left)
+    {
+movingBackward(b_speed);//Duration of time needs to be defined
+delay(500);
+Serial.print("Turning Right ");
+turningRight();
+movingForward(c_speed);
+delay(3000);
+turningLeft();
+movingForward(c_speed);
+delay(3000);
+meanPosR();
+movingForward(c_speed);
+}else if(obstacle_right < obstacle_left){
+movingBackward(b_speed);//Duration of time needs to be defined
+delay(500);
+Serial.print("Turning Left");
+turningLeft();
+movingForward(c_speed);
+delay(3000);
+turningRight();
+movingForward(c_speed);
+delay(3000);
+meanPosR();
+movingForward(c_speed);
   }else {
-//    I don't know what to do just blink.
-}
+turnOff();
+for (int blk =0; blk<=5;blk++){
+    blinking();
+    delay(50);
+  };  
+};
 
-  }
+};
+   
 
-//    meanPosL();
-//    turningRight();
-//    meanPosR();
- 
-  
-  
-    }
-  else{
-  movingForward();
-  noTone(buzzerPin);
-      };
-     
-
- 
 void test (){
   
  blinking();
  delay(100);
  turningLeft();
  delay(100);
- movingForward();
+ movingForward(c_speed);
  delay(1000);
  turnOff();
  delay(100);
  meanPosL();
  delay(200);
- movingBackward();
+ movingBackward(b_speed);
  delay(1000);
  turnOff();
  delay(1000);
 
- blinking();
- delay(100);
+ for (int blk =0; blk<=3;blk++){
+    blinking();
+    delay(100);
+  };  
 
 turningRight();
 delay(100);
-movingForward();
+movingForward(c_speed);
 delay(1000);
 turnOff();
 delay(100);
 meanPosR();
 delay(100);
-movingBackward();
+movingBackward(b_speed);
 delay(1000);
 turnOff();
 delay(100);
@@ -359,12 +357,12 @@ switch (results.value){
 
  case Moving_Forward:
  blinking();
- movingForward();
+ movingForward(c_speed);
  break;
 
  case Moving_Backward:
  blinking();
- movingBackward();
+ movingBackward(b_speed);
  break;
 };//END OF THE CASE SWITCH STATEMENT
 };
@@ -383,7 +381,10 @@ pinMode(7,OUTPUT);
 //SERVO SETUP
 //===========
 agv_servo.attach(servo_pos); // Servo attached to pin 3
-agv_servo.write(42);
+agv_servo.write(init_pos);
+IR_servo.attach(servo2_pos);//Sero attached to pin 9
+IR_servo.write(init2_pos);
+
 
 //ULTRASONIC SENSOR
 //==================
@@ -398,23 +399,38 @@ pinMode(in2,OUTPUT);
 pinMode(enA,OUTPUT);//PWM
 //DEBUG SECTION
 //=============
-//CALLING THE IR SENSOR FUNCTION
-//==============================
-obstacle = IR_sensor();
-//INITIAL LOGIC TO START MOVING FORWARD AFTER READING THE SENSOR VALUE
-//======================================================================
-  if (obstactle<=100){
-  tone(buzzerPin,2000);
-  delay(50);
-  turnOff();
-  for (int blk =0; blk<=5;blk++){
-    blinking();
-  };
-};
-
+servo_left();
+//delay(200);
+//servo_right();
+//delay(200);
+}
 void loop(){
-//IR_Receiver_Module();
-switchCase();
+//  switchCase(); //The code is working correctly.
+
+//current_time = millis();
+
+
+//if(current_time - previousTime_1>=interval){
+//
+// obstacle = IR_sensor();//Appends the IR sensor value to the obstacle variable.
+// Serial.print("Normal Obstacle Distance Checkup : ");
+// Serial.println(obstacle);
+//
+////START OF BODY
+////==============
+// if(obstacle>90){
+//    blinking();
+//    
+////   movingForward(c_speed);
+//  }
+//  else if(obstacle<=90){
+//    buzzer_action();//This function should kick in.
+//  };
+////  This is like the function event tracker.
+//  previousTime_1 = current_time;
+//  
+//}
+
 };
 
 //CHALLENGES ENCOUNTERED
