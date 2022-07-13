@@ -239,10 +239,10 @@ void meanPosL(){
 //FUNCTIONS FOR THE IR RECEIVER SERVO
 //=======================================
  void servo_left(){
- for(int angle = 90; angle >=0; angle -= 1)
+ for(int angle = 90; angle >=20; angle -= 1)
  {
  IR_servo.write(angle);
- delay(10);
+ delay(8);
  }
   obstacle_left = IR_sensor();
   Serial.print("Obstacle distance left : ");
@@ -250,10 +250,10 @@ void meanPosL(){
  };
 
  void servo_right(){
- for(int angle = 0; angle <=180; angle += 1)
+ for(int angle = 20; angle <=160; angle += 1)
  {
  IR_servo.write(angle); 
- delay(10);
+ delay(8);
  }
    obstacle_right = IR_sensor();
    Serial.print("Obstacle distance right : ");
@@ -261,19 +261,19 @@ void meanPosL(){
  }; 
 
  void servo_smooth(){
- for(int angle = 180; angle >=90; angle -= 1)
+ for(int angle = 160; angle >=90; angle -= 1)
  { // in steps of 1 degree
  IR_servo.write(angle);
- delay(10);
+ delay(8);
  }
   };
   
  
  int IR_sensor(){
   digitalWrite(trigPin,LOW);
-  delayMicroseconds(2);
+  delayMicroseconds(1);
   digitalWrite(trigPin,HIGH);
-  delayMicroseconds(10);
+  delayMicroseconds(1);
   digitalWrite(trigPin,LOW);
   
  duration=pulseIn(echoPin,HIGH);
@@ -288,9 +288,9 @@ void meanPosL(){
 //===========================================
   void IR_Receiver_Module(){
   digitalWrite(trigPin,LOW);
-  delayMicroseconds(2);
+  delayMicroseconds(1);
   digitalWrite(trigPin,HIGH);
-  delayMicroseconds(10);
+  delayMicroseconds(1);
   digitalWrite(trigPin,LOW);
   
  duration=pulseIn(echoPin,HIGH);
@@ -531,16 +531,17 @@ pinMode(in2,OUTPUT);
 pinMode(enA,OUTPUT);//PWM
 //DEBUG SECTION
 //=============
+//   movingForward(c_speed);
 
 };
 void loop(){
 //   buttonAssignment();
-//  switchCase(); //The code for the IR reciever
+  switchCase(); //The code for the IR reciever
 // IR_Receiver_Module();//Code for the ultrasonic sensor.
 
 //Taking the ultrasonic sensor readings at intervals of 200ms.
 //=============================================================
-
+/*
 current_time = millis();
 if(current_time - previousTime_1>=interval){
   Serial.println(previousTime_1);
@@ -562,5 +563,5 @@ if(current_time - previousTime_1>=interval){
   
 }
 
-
+*/
 };
